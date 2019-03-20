@@ -6,7 +6,7 @@ node_modules/**
 *.env
 
 # Ignore lock file
-*.package-lock.json
+package-lock.json
 
 # Ignore log file
 *.log
