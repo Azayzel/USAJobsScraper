@@ -257,7 +257,7 @@ function SendMail(body, found){
         html: finalBody,
     };
     sgMail.send(msg).then((resp) => {
-        Logger.WriteLog(`Sent Email: ${resp}`);
+        Logger.WriteLog(`Sent Email: ${resp[0]}`);
         Logger.WriteLog(`Done.`);
         process.exit(0);
     })
