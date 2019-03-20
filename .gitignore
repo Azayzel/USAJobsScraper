@@ -1,0 +1,9 @@
+# Ignore MongoDB Data and Node_Modules
+data/**
+node_modules/**
+
+# Ignore env vars
+*.env
+
+# Ignore lock file
+*.package-lock.json

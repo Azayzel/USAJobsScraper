@@ -1,0 +1,21 @@
+{
+  "name": "usajobsscraper",
+  "version": "1.0.0",
+  "description": "Scrape USA Jobs and Email Alert when new jobs are found. I built this for my wife to find her a new job.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Josh Lavely",
+  "license": "ISC",
+  "dependencies": {
+    "@sendgrid/mail": "^6.3.1",
+    "cheerio": "^1.0.0-rc.2",
+    "dotenv": "^7.0.0",
+    "log4js": "^4.0.2",
+    "mongodb": "3.1.13",
+    "mongoose": "5.4.19",
+    "mongoose-timestamp": "^0.6.0",
+    "puppeteer": "^0.13.0"
+  }
+}
