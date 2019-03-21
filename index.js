@@ -10,6 +10,11 @@ let totalPages = 0;
 var pageNum = 1;
 const baseUrl = `https://www.usajobs.gov/Search/?g=13&g=14&g=15&j=2210&hp=fed-competitive&hp=fed-excepted&k=IT%20Specialist&gs=true&smin=85816&smax=155073&p=${pageNum}`;
 
+// SetupKey
+sgMail.setApiKey(process.env.SEND_GRID_API_KEY);
+
+//#region  DB Connection && Init
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB, { useNewUrlParser: true });
 var db = mongoose.connection;
@@ -17,25 +22,26 @@ var db = mongoose.connection;
 // Once open, Begin Init
 db.once('open', function (db) {
     Logger.WriteLog(`Connected to Database. Beginning Scan.`);
-    var Job = require('./models/jobModel')
-    init(Job).catch()
+    var Job = require('./models/jobModel');
+    init(Job);
 })
 
+//#endregion
 
 //#region Application Functions
 
 /**
  * Entry Point
- * @param {*} Job 
+ * @param {Job} Job 
+ * @see './models/jobModel'
  */
 async function init(Job) {
-
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
     await page.goto(baseUrl, {
         waitUntil: 'networkidle0',
         timeout: (50 * 1000)
-    });
+    }).catch((err) => Logger.WriteLog(`Error loading page: ${err}`));
     const html = await page.content(); // serialized HTML of page DOM.
     await browser.close();
     var $ = cheerio.load(html);
@@ -77,9 +83,9 @@ async function init(Job) {
 
 /**
  * Scrape USAJobs URL
- * @param {*} url 
- * @param {*} i 
- * @param {*} total 
+ * @param {String} url 
+ * @param {Number} i 
+ * @param {Number} total 
  */
 async function GetPageData(url, i, total){
     Logger.WriteLog(`Scanning Page ${i} of ${total}`);
@@ -88,7 +94,8 @@ async function GetPageData(url, i, total){
     await page.goto(url, {
         waitUntil: 'networkidle0',
         timeout: (50 * 1000)
-    });
+    })
+    .catch((err) => Logger.WriteLog(`Error loading page: ${err}`));
     const html = await page.content(); // serialized HTML of page DOM.
     await browser.close();
     var $ = cheerio.load(html);
@@ -111,13 +118,13 @@ async function GetPageData(url, i, total){
             }
             results.push(result);
         });
-
 }
 
 /**
  * Check Results against DB, write if newer
  *  and send email when done
- * @param {*} Job 
+ * @param {Job} Job 
+ * @see './models/jobModel'
  */
 function CheckAndWriteToDB(Job){
     var emailData = [];
@@ -212,59 +219,58 @@ function CheckAndWriteToDB(Job){
 
 /**
  * Send Email with results
- * @param {*} body 
- * @param {*} found 
+ * @param {String} body 
+ * @param {Number} found 
  */
 function SendMail(body, found){
     let finalBody, subject;
     if(found > 0){
     finalBody = `
-<header class="flex-header">
-<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-  <div>
-    <div class="flex-header-title">
-      <h3>
-      <i class="fas fa-search" style="margin-right: 5px;"></i>
-        USA Jobs Scraper
-         <span style="margin-left: 100px;">
-            <i class="fas fa-clipboard-list" style="margin-right: 5px;"></i> ${found} Results
-         </span>
-      </h3>
-    </div>
-  </div>
-</header>
-<div class="container"> `
-+ body + `
-</container>
-`
-    }
-    else{
+                <header class="flex-header">
+                <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+                <div>
+                    <div class="flex-header-title">
+                    <h3>
+                    <i class="fas fa-search" style="margin-right: 5px;"></i>
+                        USA Jobs Scraper
+                        <span style="margin-left: 100px;">
+                            <i class="fas fa-clipboard-list" style="margin-right: 5px;"></i> ${found} Results
+                        </span>
+                    </h3>
+                    </div>
+                </div>
+                </header>
+                <div class="container"> `
+                + body + 
+                `</container>`
+    } 
+    else {
         finalBody = `
-<div class="container" style="text-align: ceter;">
-        <h3>Looks like nothing new was posted</h3>
-        <img src="https://media.giphy.com/media/fhLgA6nJec3Cw/giphy.gif" />
+                    <div class="container" style="text-align: ceter;">
+                            <h3>Looks like nothing new was posted</h3>
+                            <img src="https://media.giphy.com/media/fhLgA6nJec3Cw/giphy.gif" />
 
-        <p> **<i>The Scraper will run again in 5 hours</i> </p>
-</div>
-`;
+                            <p> **<i>The Scraper will run again in 5 hours</i> </p>
+                    </div>`;
 
     }
-    sgMail.setApiKey('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');
-    const msg = {
-        to: [process.env.EMAIL],
-        from: 'Jobs@lavelynet.com',
+
+    let msg = {
+        to: process.env.EMAIL,
+        from: process.env.FROM,
         subject: 'USAJobs Data',
         html: finalBody,
     };
+
+    // Send Email
     sgMail.send(msg).then((resp) => {
-        Logger.WriteLog(`Sent Email: ${resp[0]}`);
+        Logger.WriteLog(`Sent Email`,resp);
         Logger.WriteLog(`Done.`);
-        process.exit(0);
-    })
-    .catch((err) => {
+        //process.exit(0);
+    }).catch((err) => {
         Logger.WriteLog(`Error Sending Email: ${err}`);
     })
 }
-//#endregion
 
+//#endregion
 
