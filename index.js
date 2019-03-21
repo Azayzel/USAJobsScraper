@@ -256,7 +256,7 @@ function SendMail(body, found){
     }
 
     let msg = {
-        to: process.env.EMAIL,
+        to: process.env.EMAIL.split('+'),
         from: process.env.FROM,
         subject: 'USAJobs Data',
         html: finalBody,
@@ -266,7 +266,7 @@ function SendMail(body, found){
     sgMail.send(msg).then((resp) => {
         Logger.WriteLog(`Sent Email`,resp);
         Logger.WriteLog(`Done.`);
-        //process.exit(0);
+        process.exit(0);
     }).catch((err) => {
         Logger.WriteLog(`Error Sending Email: ${err}`);
     })
