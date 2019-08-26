@@ -8,7 +8,7 @@ const Logger = new _log('trace');
 let results = [];
 let totalPages = 0;
 var pageNum = 1;
-const baseUrl = `https://www.usajobs.gov/Search/?g=13&g=14&g=15&j=2210&hp=fed-competitive&hp=fed-excepted&k=IT%20Specialist&gs=true&smin=85816&smax=155073&p=${pageNum}`;
+const baseUrl = `https://www.usajobs.gov/Search/?g=12&g=13&g=14&g=15&j=2210&hp=fed-competitive&hp=fed-excepted&k=IT%20Specialist&gs=true&smin=85816&smax=155073&p=${pageNum}`;
 
 // SetupKey
 sgMail.setApiKey(process.env.SEND_GRID_API_KEY);
@@ -45,21 +45,21 @@ async function init(Job) {
     const html = await page.content(); // serialized HTML of page DOM.
     await browser.close();
     var $ = cheerio.load(html);
-    let resultCount = $('.usajobs-search-controls__results-count').text().split(" of ")[1].replace(" jobs").trim().replace('undefined','');
-    totalPages = Math.ceil(resultCount/10);
+    let resultCount = $('.usajobs-search-controls__results-count').text().split(" of ")[1].replace(" jobs").trim().replace('undefined', '');
+    totalPages = Math.ceil(resultCount / 10);
 
     Logger.WriteLog(`Total Pages to scan: ${totalPages}`);
 
     $('.usajobs-search-result--core')
         .each(function () {
             let a = $(this).find('a');
-            let agency = $(this).find('.usajobs-search-result--core__agency').text().replace("\n","").replace("                   ","").trim();
-            let department = $(this).find('.usajobs-search-result--core__department').text().replace("\n","").replace("                   ","").trim();
-            let location = $(this).find('.usajobs-search-result--core__location-link').text().replace("\n","").replace("                   ","").trim().split('\n')[0];
-            let pay = $(this).find('.usajobs-search-result--core__item').text().replace('\n','').replace('                        ').trim().split('\n')[0].replace('undefined','');
-            let closing = $(this).find('.usajobs-search-result--core__closing-date').text().replace('\n                Opening and closing dates\n                ','').trim().split('\n')[0];
+            let agency = $(this).find('.usajobs-search-result--core__agency').text().replace("\n", "").replace("                   ", "").trim();
+            let department = $(this).find('.usajobs-search-result--core__department').text().replace("\n", "").replace("                   ", "").trim();
+            let location = $(this).find('.usajobs-search-result--core__location-link').text().replace("\n", "").replace("                   ", "").trim().split('\n')[0];
+            let pay = $(this).find('.usajobs-search-result--core__item').text().replace('\n', '').replace('                        ').trim().split('\n')[0].replace('undefined', '');
+            let closing = $(this).find('.usajobs-search-result--core__closing-date').text().replace('\n                Opening and closing dates\n                ', '').trim().split('\n')[0];
             let result = {
-                "title": a.text().replace("\n","").replace("                   ","").trim().split('\n')[0],
+                "title": a.text().replace("\n", "").replace("                   ", "").trim().split('\n')[0],
                 "link": `https://usajobs.gov${a.attr('href')}`,
                 "agency": agency,
                 "department": department,
@@ -71,8 +71,8 @@ async function init(Job) {
         });
     // Loop through each site
     // Start loop at Page 2
-    for(var i = 2; i <= totalPages; i++){
-        let url = `https://www.usajobs.gov/Search/?g=13&g=14&g=15&j=2210&hp=fed-competitive&hp=fed-excepted&k=IT%20Specialist&gs=true&smin=85816&smax=155073&p=${i}`;
+    for (var i = 2; i <= totalPages; i++) {
+        let url = `https://www.usajobs.gov/Search/?g=12&g=13&g=14&g=15&j=2210&hp=fed-competitive&hp=fed-excepted&k=IT%20Specialist&gs=true&smin=85816&smax=155073&p=${i}`;
         await GetPageData(url, i, totalPages);
     }
 
@@ -87,7 +87,7 @@ async function init(Job) {
  * @param {Number} i 
  * @param {Number} total 
  */
-async function GetPageData(url, i, total){
+async function GetPageData(url, i, total) {
     Logger.WriteLog(`Scanning Page ${i} of ${total}`);
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -95,20 +95,20 @@ async function GetPageData(url, i, total){
         waitUntil: 'networkidle0',
         timeout: (50 * 1000)
     })
-    .catch((err) => Logger.WriteLog(`Error loading page: ${err}`));
+        .catch((err) => Logger.WriteLog(`Error loading page: ${err}`));
     const html = await page.content(); // serialized HTML of page DOM.
     await browser.close();
     var $ = cheerio.load(html);
     $('.usajobs-search-result--core')
         .each(function () {
             let a = $(this).find('a');
-            let agency = $(this).find('.usajobs-search-result--core__agency').text().replace("\n","").replace("                   ","").trim();
-            let department = $(this).find('.usajobs-search-result--core__department').text().replace("\n","").replace("                   ","").trim();
-            let location = $(this).find('.usajobs-search-result--core__location-link').text().replace("\n","").replace("                   ","").trim().split('\n')[0];
-            let pay = $(this).find('.usajobs-search-result--core__item').text().replace('\n','').replace('                        ').trim().split('\n')[0].replace('undefined','');
-            let closing = $(this).find('.usajobs-search-result--core__closing-date').text().replace('\n                Opening and closing dates\n                ','').trim().split('\n')[0];
+            let agency = $(this).find('.usajobs-search-result--core__agency').text().replace("\n", "").replace("                   ", "").trim();
+            let department = $(this).find('.usajobs-search-result--core__department').text().replace("\n", "").replace("                   ", "").trim();
+            let location = $(this).find('.usajobs-search-result--core__location-link').text().replace("\n", "").replace("                   ", "").trim().split('\n')[0];
+            let pay = $(this).find('.usajobs-search-result--core__item').text().replace('\n', '').replace('                        ').trim().split('\n')[0].replace('undefined', '');
+            let closing = $(this).find('.usajobs-search-result--core__closing-date').text().replace('\n                Opening and closing dates\n                ', '').trim().split('\n')[0];
             let result = {
-                "title": a.text().replace("\n","").replace("                   ","").trim().split('\n')[0],
+                "title": a.text().replace("\n", "").replace("                   ", "").trim().split('\n')[0],
                 "link": `https://usajobs.gov${a.attr('href')}`,
                 "agency": agency,
                 "department": department,
@@ -126,31 +126,31 @@ async function GetPageData(url, i, total){
  * @param {Job} Job 
  * @see './models/jobModel'
  */
-function CheckAndWriteToDB(Job){
+function CheckAndWriteToDB(Job) {
     var emailData = [];
     var emailDataStr = ``;
     let i = 1;
-    if(results.length > 0){
-        for(let result of results){
-            if(result != undefined){
-            Job.find({
+    if (results.length > 0) {
+        for (let result of results) {
+            if (result != undefined) {
+                Job.find({
                     link: result.link   // search query
                 })
-                .then(doc => {
-                    if(doc.length == 0){
-                        let newJob = new Job({
-                            title: result.title,
-                            link: result.link,
-                            agency: result.agency,
-                            department: result.department,
-                            location: result.location,
-                            pay: result.pay,
-                            dateRange: result.dateRange
-                        });
-                        
-                        newJob.save()
-                            .then((doc) => {
-                                let str = ` 
+                    .then(doc => {
+                        if (doc.length == 0) {
+                            let newJob = new Job({
+                                title: result.title,
+                                link: result.link,
+                                agency: result.agency,
+                                department: result.department,
+                                location: result.location,
+                                pay: result.pay,
+                                dateRange: result.dateRange
+                            });
+
+                            newJob.save()
+                                .then((doc) => {
+                                    let str = ` 
                             
     <table class="table-wrap is-auto-width" style="background: #f4f6f7; padding: 10px;margin-top: 5px;">
     <tr>
@@ -187,31 +187,31 @@ function CheckAndWriteToDB(Job){
     </tr>
     </table>
     `;
-                                emailDataStr += str;
-                                emailData.push(result);
-                                if(i == results.length){
-                                    SendMail(emailDataStr, emailData.length);
-                                }
-                                else{
-                                    i++; 
-                                }
-                            })
-                            .catch((err) => {
-                                Logger.WriteLog(`Error: ${err}`);
-                            })
-                    }
-                    else{
-                        if(i == results.length){
-                            SendMail(emailDataStr, emailData.length);
+                                    emailDataStr += str;
+                                    emailData.push(result);
+                                    if (i == results.length) {
+                                        SendMail(emailDataStr, emailData.length);
+                                    }
+                                    else {
+                                        i++;
+                                    }
+                                })
+                                .catch((err) => {
+                                    Logger.WriteLog(`Error: ${err}`);
+                                })
                         }
-                        else{
-                            i++;
+                        else {
+                            if (i == results.length) {
+                                SendMail(emailDataStr, emailData.length);
+                            }
+                            else {
+                                i++;
+                            }
                         }
-                    }
-                })
-                .catch(err => {
-                    Logger.WriteLog(`Error While Searching: ${err}`);
-                })
+                    })
+                    .catch(err => {
+                        Logger.WriteLog(`Error While Searching: ${err}`);
+                    })
             }
         };
     }
@@ -222,10 +222,10 @@ function CheckAndWriteToDB(Job){
  * @param {String} body 
  * @param {Number} found 
  */
-function SendMail(body, found){
+function SendMail(body, found) {
     let finalBody, subject;
-    if(found > 0){
-    finalBody = `
+    if (found > 0) {
+        finalBody = `
                 <header class="flex-header">
                 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
                 <div>
@@ -241,9 +241,9 @@ function SendMail(body, found){
                 </div>
                 </header>
                 <div class="container"> `
-                + body + 
-                `</container>`
-    } 
+            + body +
+            `</container>`
+    }
     else {
         finalBody = `
                     <div class="container" style="text-align: ceter;">
@@ -255,7 +255,7 @@ function SendMail(body, found){
 
     }
 
-        
+
     let msg = {
         to: process.env.EMAIL.split('+'),
         from: process.env.FROM,
@@ -265,7 +265,7 @@ function SendMail(body, found){
 
     // Send Email
     sgMail.send(msg).then((resp) => {
-        Logger.WriteLog(`Sent Email`,resp);
+        Logger.WriteLog(`Sent Email`, resp);
         Logger.WriteLog(`Done.`);
         process.exit(0);
     }).catch((err) => {
