@@ -8,7 +8,7 @@ const Logger = new _log('trace');
 let results = [];
 let totalPages = 0;
 var pageNum = 1;
-const baseUrl = `https://www.usajobs.gov/Search/?g=12&g=13&g=14&g=15&j=2210&hp=fed-competitive&hp=fed-excepted&k=IT%20Specialist&gs=true&smin=85816&smax=155073&p=${pageNum}`;
+const baseUrl = `https://www.usajobs.gov/Search/?g=13&g=14&g=15&l=Virginia&hp=fed-excepted&hp=public&k=Supervisory%20IT%20Specialist&smin=85816&smax=155073&gs=true&p=${pageNum}`;
 
 // SetupKey
 sgMail.setApiKey(process.env.SEND_GRID_API_KEY);
@@ -45,7 +45,13 @@ async function init(Job) {
     const html = await page.content(); // serialized HTML of page DOM.
     await browser.close();
     var $ = cheerio.load(html);
-    let resultCount = $('.usajobs-search-controls__results-count').text().split(" of ")[1].replace(" jobs").trim().replace('undefined', '');
+    let resultCount;
+    try {
+        resultCount = $('.usajobs-search-controls__results-count').text().split(" of ")[1].replace(" jobs").trim().replace('undefined', '');
+    }
+    catch (err) {
+        Logger.WriteLog("Error: ", err)
+    }
     totalPages = Math.ceil(resultCount / 10);
 
     Logger.WriteLog(`Total Pages to scan: ${totalPages}`);
