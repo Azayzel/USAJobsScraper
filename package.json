@@ -16,6 +16,6 @@
     "mongodb": "3.1.13",
     "mongoose": "5.4.19",
     "mongoose-timestamp": "^0.6.0",
-    "puppeteer": "^0.13.0"
+    "puppeteer": "^5.2.1"
   }
 }
